@@ -12,19 +12,17 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from utils import *
 
-# testing git
 
+st.set_page_config(page_title="Home", page_icon=":rocket:", layout="wide")
 
-st.set_page_config(page_title="Home", page_icon=":house:", layout="wide")
-
-st.title("Know your Anime:clapper:")
+st.title("AnimeHub :clapper:")
 
 selected = option_menu(
     menu_title=None,
-    options=['Home', 'Dashboard', 'About'],
-    icons=["house", 'rocket-takeoff', "mortarboard-fill"],
+    options=['Home', 'Dashboard'],
+    icons=["house", 'rocket-takeoff'],
     menu_icon="cast",
-    default_index=1,
+    default_index=0,
     orientation='horizontal',
 )
 
@@ -70,8 +68,6 @@ if selected == 'Home':
 
     st.divider()
 
-    # Anime Recommender
-
     st.header("Get Personalized Anime Recommendations:gift:")
 
     st.write("#")
@@ -106,7 +102,7 @@ if selected == 'Home':
     if "rating" not in st.session_state:
         st.session_state.rating = []
 
-    if st.session_state.current_anime < len(st.session_state.popular_animes) and len(st.session_state.rating) <= 2:
+    if st.session_state.current_anime < len(st.session_state.popular_animes) and len(st.session_state.rating) <= 4:
         anime_name = st.session_state.popular_animes[st.session_state.current_anime]
         col1, col2 = st.columns([1, 3])
         with col1:
@@ -133,7 +129,6 @@ if selected == 'Home':
         with col2:
             col21, col22, col33 = st.columns([0.75, 2, 1.5])
 
-            # If the user has entered an answer, record it and move on to next anime
             with col21:
                 st.write("#")
 
@@ -142,12 +137,10 @@ if selected == 'Home':
                     st.session_state.final_anime.append(anime_name)
                     st.session_state.current_anime += 1
 
-                # Clear the input field after the answer has been recorded
                     st.experimental_rerun()
 
             with col22:
                 st.write("#")
-                # If the user didn't watch the anime, skip to the next one
                 if st.button("Did not watch this anime"):
                     st.session_state.current_anime += 1
 
@@ -167,11 +160,8 @@ if selected == 'Home':
 
         st.write("#")
 
-        # Once all animes have been rated or skipped, display the ratings
         final_anime = st.session_state.final_anime
         rating = st.session_state.rating
-
-        # Clear the session state
 
         recommendation_list = get_weighted_recommendations(final_anime, rating,
                                                            cosine_sim=cosine_sim, num_recommendations=10, indices=indices, model_df=model_df)
@@ -211,18 +201,15 @@ if selected == 'Home':
     if 'start_over_clicked' not in st.session_state:
         st.session_state.start_over_clicked = False
 
-    # If there's no anime_name in the session state or start over button clicked, show the input field and button
     if st.session_state.closest_anime.empty or st.session_state.start_over_clicked:
         st.session_state.user_input = st.text_area(
             "Enter the Anime story")
         if st.button('Submit'):
-            # Get the Anime name based on the user's input
             st.session_state.closest_anime = pd.Series(
                 get_anime_name_based_on_story(st.session_state.user_input, tfidf=tfidf, tfidf_matrix=tfidf_matrix, model_df=model_df))
             st.session_state.start_over_clicked = False
 
     else:
-        # If there's an anime name in the session state, show it
         anime_name = st.session_state.closest_anime[st.session_state.anime_index]
 
         col1, col2 = st.columns([1, 3])
@@ -231,7 +218,6 @@ if selected == 'Home':
             image_file = "_".join(image_name.split(" ")) + ".jpg"
             image_path = os.path.join(Thumbnail_folder, image_file)
             image = Image.open(image_path)
-            # st.write("***{}***".format(image_name))
             st.subheader(image_name)
             st.image(image, use_column_width=True)
 
@@ -240,12 +226,10 @@ if selected == 'Home':
             row = model_df[model_df["Name"] == anime_name]
             write_anime_details_wide(row, image_name)
 
-        # Clear the session state
         st.markdown(f"The Anime you're talking about is: **{anime_name}**")
         st.write(
             "Is this not the Anime you're Searching for?, Click Next to catch the Anime you're looking for.")
 
-        # Create three columns for the buttons
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -254,7 +238,6 @@ if selected == 'Home':
                     st.session_state.anime_index -= 1
 
         with col2:
-            # Add a button to allow user to start over
             if st.button('Start Over'):
                 st.session_state.start_over_clicked = True
             st.write("Want to share a different story?")
@@ -272,6 +255,7 @@ if selected == "Dashboard":
     import plotly.graph_objects as go
     import re
     import textwrap
+    from plotly.subplots import make_subplots
 
     pio.templates.default = "simple_white"
 
@@ -290,21 +274,18 @@ if selected == "Dashboard":
 
     def convert_to_minutes(time_string):
         time_string = time_string.split('per')[0]
-        time_string = time_string.strip()  # remove white spaces
+        time_string = time_string.strip()
         if time_string == 'Unknown':
-            return time_string  # if time is unknown, return it as it is
-        time_split = time_string.split('.')  # split by "."
+            return time_string
+        time_split = time_string.split('.')
         total_minutes = 0
         for t in time_split:
-            t = t.strip()  # remove white spaces
+            t = t.strip()
             if 'hr' in t:
-                # convert hours to minutes
                 total_minutes += int(t.replace('hr', '').strip()) * 60
             elif 'min' in t:
-                # keep minutes as it is
                 total_minutes += int(t.replace('min', '').strip())
             elif 'sec' in t:
-                # convert seconds to minutes
                 total_minutes += int(t.replace('sec', '').strip()) / 60
         return total_minutes
 
@@ -319,9 +300,9 @@ if selected == "Dashboard":
 
     st.write("""This dashboard is our joint venture into the intricate world of anime. Together, we'll navigate the nuances of different anime types, uncover how they fare in terms of ratings, and dive into the colorful spectrum of anime genres. Our exploration will also take us through the evolution of anime across time, tracing both its growth in volume and progress in quality. So, ready to enhance your anime insight and appreciation? Let's embark on this fascinating journey!""")
 
-    st.write("#")
+    st.divider()
 
-    st.subheader("Anime Types :tv: :movie_camera: :musical_note:")
+    st.header("Anime Types :tv: :movie_camera: :musical_note:")
 
     st.write("\n")
 
@@ -346,13 +327,13 @@ if selected == "Dashboard":
                        )
 
     fig.update_layout(
-        # title_text='Type of Anime released',
         xaxis_title_text='Type',
         yaxis_title_text='Count',
         bargap=0.1,
         barmode='relative'
     )
 
+    st.write("#")
     st.subheader("Distribution of Anime Types")
     st.plotly_chart(fig, use_container_width=True)
 
@@ -361,7 +342,6 @@ if selected == "Dashboard":
 Meanwhile, the other types - 'Movies', 'Specials', and 'Music' - retain their individual classifications. These formats have distinct characteristics that set them apart. 'Movies' usually represent standalone experiences or extensions of an existing series but with higher production values. 'Specials' often supplement a series with additional or side-story content. 'Music' represents music videos or short animations accompanying a song, presenting a unique form of anime content. These distinctive aspects make it important to analyze these types separately.
 
 By implementing this grouping, it simplifies our dataset, enabling us to more efficiently pinpoint broader trends between the main methods of anime distribution. This approach ensures we do not miss out on underlying patterns while still providing a comprehensive, easy-to-understand analysis""")
-
     st.write("#")
 
     col_1, col_2 = st.columns([3, 7])
@@ -383,7 +363,6 @@ By implementing this grouping, it simplifies our dataset, enabling us to more ef
         xs = np.linspace(min(ratings), max(ratings), 200)
         ys = density(xs)
 
-        # Density trace
         trace2 = go.Scatter(
             x=xs,
             y=ys,
@@ -394,13 +373,12 @@ By implementing this grouping, it simplifies our dataset, enabling us to more ef
 
         data = [trace1, trace2]
 
-        # Layout
         layout = go.Layout(
             xaxis=dict(title='Rating', range=[3, 9.5]),
             yaxis=dict(title='Density',  range=[
                        0, max(ys)], automargin=True),
             bargap=0.2,
-            bargroupgap=0.1,   # Adjust the width here
+            bargroupgap=0.1,
             height=600,
             title={
                 'text': "Distribution of Anime Ratings",
@@ -410,7 +388,6 @@ By implementing this grouping, it simplifies our dataset, enabling us to more ef
                 'yanchor': 'top'}
         )
 
-        # Figure
         fig = go.Figure(data=data, layout=layout)
         fig.update_layout(showlegend=False)
 
@@ -473,6 +450,8 @@ When we dig deeper into these ratings based on the type of anime, the patterns b
 
 However, anime type Music stands out from this observation. While it maintains a similar overall distribution, its average rating is noticeably lower. This might indicate a divergence in viewer preference when it comes to Musical anime or potentially highlight a niche audience that appreciates this type of anime, contributing to a lower general rating. What is also interesting to note is the longer right tail in the distribution for Musical anime, signifying a greater spread of higher ratings. This might suggest a subset of viewers who rate these productions very highly, again hinting at a smaller fanbase.""")
 
+    st.divider()
+
     new_df = df.copy(deep=True)
     new_df = new_df[new_df['Episodes'] != 'Unknown']
     new_df = new_df[new_df['Duration'] != 'Unknown']
@@ -480,13 +459,12 @@ However, anime type Music stands out from this observation. While it maintains a
     new_df['Duration'] = new_df['Duration'].apply(convert_to_minutes)
     new_df['Total_Duration'] = new_df['Duration'] * new_df['Episodes']
 
-    st.subheader("How long does it take to watch an anime? :clock8:")
+    st.header("How long does it take to watch an anime? :clock8:")
 
     kde_dict = {}
     range_dict = {}
     for t in new_df['Type'].unique():
         df_type = new_df[new_df['Type'] == t]
-        # Ensure 'Duration' column is numeric for KDE calculation
         df_type['Total_Duration'] = pd.to_numeric(
             df_type['Total_Duration'], errors='coerce') / 60
         kde = gaussian_kde(df_type['Total_Duration'].dropna())
@@ -494,7 +472,6 @@ However, anime type Music stands out from this observation. While it maintains a
         range_dict[t] = (df_type['Total_Duration'].min(), min(
             df_type['Total_Duration'].max(), 1500/60))
 
-    # The list of all types
     all_types = list(kde_dict.keys())
 
     selected_types = st.multiselect(
@@ -530,6 +507,9 @@ However, anime type Music stands out from this observation. While it maintains a
     st.write("""The duration of anime presents an intriguing dimension of variability, influenced largely by the type of the anime. A clear testament to this diversity is TV anime, which typically boasts the longest runtimes. This makes perfect sense as TV series have the luxury of time to delve deep into character arcs, unravel subplots, and span across multiple episodes or even seasons.
 
 What's particularly captivating is the dual nature of Movie-type anime, exhibiting bimodal runtime distribution with peaks at around 10 minutes and 1.5 hours. This fascinating observation could imply two distinct types of productions: shorter pieces that might serve as exciting trailers or introductions to new TV series, and feature-length movies.""")
+
+    st.divider()
+    st.header("Anime Genres :sparkles:")
 
     splitted_genres = df['Genres'].str.split(', ', expand=True)
     stacked_genres = splitted_genres.stack()
@@ -569,6 +549,7 @@ What's particularly captivating is the dual nature of Movie-type anime, exhibiti
         'xanchor': 'center',
         'yanchor': 'top'})
 
+    st.write("#")
     st.plotly_chart(fig, use_container_width=True)
 
     st.write("""Upon reviewing the distribution of genres in our anime dataset, a clear preference for certain genres emerges among viewers. Comedy is the reigning champion, standing as the most frequently occurring genre. It underscores the universal appeal of humor and the joy audiences find in light-hearted, amusing narratives.
@@ -576,6 +557,12 @@ What's particularly captivating is the dual nature of Movie-type anime, exhibiti
 Following Comedy, the popularity list continues with Action, indicating a strong appetite for exhilarating stories full of conflict, physical feats, and heroic exploits. Fantasy, offering a delightful escape from reality through mystical and imaginative elements, claims the third spot. Adventure and Sci-Fi, genres full of exploration and forward-thinking concepts, respectively, also enjoy significant popularity. The sixth most frequent genre, Drama, showcases viewers' appreciation for emotionally-charged storylines, profound character growth, and poignant life situations.
 
 Overall, these findings offer a fascinating glimpse into the world of anime, revealing what genre elements most captivate viewers' imaginations and maintain their engagement.""")
+
+    st.divider()
+
+    st.header("Anime over the years :calendar:")
+
+    st.write("#")
 
     # Assuming the column with the dates is named 'Date'
     df['Aired_Year'] = df['Aired'].apply(extract_year)
@@ -614,23 +601,19 @@ Overall, these findings offer a fascinating glimpse into the world of anime, rev
 A dramatic surge in anime production occurred, ***peaking in 2016*** with a remarkable ***638 titles released in a single year***. This era represents the peak popularity of anime worldwide.
 
 The post-2016 decline could signal market saturation, or perhaps a shift from quantity to quality, impacted by economic or technological factors. Overall, this graph presents a compelling view of the anime industry's evolution over the decades, underlining its growth, peaks, and subsequent adjustments.""")
-
     st.write("#")
 
     temp_df = new_df.copy(deep=True)
     temp_df['Genres'] = temp_df['Genres'].str.split(',')
 
-    # Explode the dataframe on the 'Genres' column
     df_exploded = temp_df.explode('Genres')
 
-    # Now groupby 'Year' and 'Genres', count the movies, reset index, and pivot the dataframe
     pivot_df = df_exploded.groupby(['Aired_Year', 'Genres']).count().reset_index(
     ).pivot(index='Aired_Year', columns='Genres', values='Name').fillna(0)
 
-    # The list of all genres
     all_genres = pivot_df.columns.tolist()
 
-    st.title('Anime Released by genre over years')
+    st.subheader('Anime Released by genre over years')
 
     selected_genres = st.multiselect(
         'Select genres', all_genres, default=['Adventure', 'Fantasy'])
@@ -661,7 +644,6 @@ The post-2016 decline could signal market saturation, or perhaps a shift from qu
 
     fig = go.Figure()
 
-    # Add line to the figure
     fig.add_trace(go.Scatter(
         x=df_grouped.index,
         y=df_grouped.values,
@@ -683,6 +665,10 @@ The post-2016 decline could signal market saturation, or perhaps a shift from qu
     st.plotly_chart(fig, use_container_width=True)
 
     st.write("""This clearly highlights a simultaneous increase in both quantity and quality in the anime industry over the decades. It traces the average rating of anime from the ***modest score of 5 in the 1910s*** to a significant ***6.5 by the 2010s***. This upward trajectory showcases the industry's consistent efforts in producing better-quality content, aligning with its exponential growth in production numbers.""")
+
+    st.divider()
+
+    st.header("Top 10 Anime :trophy:")
 
     top_movies = temp_df[['Name', 'Score']].sort_values(
         by='Score', ascending=False).head(10)
@@ -750,3 +736,42 @@ The post-2016 decline could signal market saturation, or perhaps a shift from qu
     fig.update_xaxes(tickangle=0, tickfont=dict(size=12))
     st.write("#")
     st.plotly_chart(fig, use_container_width=True)
+
+    st.write("""The world of anime offers an exciting range of choices for viewers, each show boasting its unique charm and appeal. According to the ratings, "Fullmetal Alchemist Brotherhood" is the top choice, scoring an impressive 9.19, hinting at a mix of engaging storylines, well-crafted characters, and possibly, top-notch animation. Other highly-rated series such as "Attack on Titan Final Season", "Steins;Gate", and "Hunter x Hunter" seem to have also won the hearts of viewers, showing their strength in storytelling.
+
+But it gets intriguing when we consider the size of anime communities. Even though "Fullmetal Alchemist Brotherhood" has the highest rating, it's actually "Death Note" and "Attack on Titan" that have the most members. And it's interesting to note that some series with the biggest fandoms, like "Sword Art Online" and "One Punch Man", don't even make it to the top-rated list. This suggests that a high rating isn't the only thing that matters to viewers. It could be that certain themes or styles resonate more with a larger audience, or perhaps the series was more accessible or well-marketed. It goes to show that anime is truly a diverse medium with something for everyone!""")
+
+    st.divider()
+
+    st.header("MPAA Ratings :movie_camera:")
+
+    ratings_score_df = get_ratings_score(temp_df)
+
+    color_dict = {'PG-13 - Teens 13 or older': '#1f77b4', 'G - All Ages': '#ff7f0e', 'Rx - Hentai': '#2ca02c',
+                  'R - 17+ (violence & profanity)': '#d62728', 'R+ - Mild Nudity': '#9467bd', 'PG - Children': '#8c564b'}
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(go.Bar(x=ratings_score_df['Rating'], y=ratings_score_df['Count'],
+                  name="Number of Anime",   marker_color=ratings_score_df['Rating'].map(color_dict)), secondary_y=False)
+    fig.add_trace(go.Scatter(x=ratings_score_df['Rating'], y=ratings_score_df['Average_score'],
+                  name="Average Score", mode='lines+markers', line=dict(color='rgba(0, 0, 0, 0.5)')), secondary_y=True)
+    fig.update_xaxes(title_text="Rating")
+    fig.update_yaxes(title_text="Number of Anime", secondary_y=False)
+    fig.update_yaxes(title_text="Average Score", secondary_y=True)
+    fig.update_layout(showlegend=False, xaxis_title_text='MPAA Film Ratings', yaxis_title_text='Number of Anime', title={
+        'text': "Number of Anime and Average Score by MPAA Film Ratings",
+        'y': 1.0,
+        'x': 0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'})
+
+    st.write("#")
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.write("""The majority of anime shows are rated 'PG-13 - Teens 13 or older', reflecting their wide appeal, but an interesting twist emerges with the 'R - 17+ (violence & profanity)' category, which despite having fewer shows, boasts the highest Average score of 7.1. Conversely, the 'G - All Ages' category, though catering to a broad audience, records a lower Average score of 6.03, pointing towards a potential disconnect between viewership size and content appreciation. This highlights the diverse interests and critical tastes within the global anime community""")
+
+    st.divider()
+
+    st.header(":sparkles: Conclusion and Reflections :sparkles:")
+
+    st.write("""In conclusion, our journey through the world of anime highlights its diversity, adaptability, and the compelling storytelling that resonates with a global audience. Despite shifts in production volume, the industry's focus on delivering quality content has remained steadfast. As we reflect on our findings, we better understand and appreciate this rich medium and its impact on popular culture. Moving forward, let's anticipate continued innovation and captivating narratives from this dynamic industry. Thank you for joining me on this enlightening exploration into anime!""")

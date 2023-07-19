@@ -1,2 +1,9 @@
 /animehub_env
-/Data
+/Data/animelist.csv
+/Data/anime_names.csv
+/Data/only_front_end_anime.csv
+/Data/first_anime_thumbnails_list.csv
+/Data/watching_status.csv
+/Data/second_anime_thumbnails_list.csv
+/Data/rating_complete.csv
+/Data/final_anime_download.csv

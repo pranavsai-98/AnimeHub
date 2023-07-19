@@ -1,6 +1,7 @@
 import numpy as np
 import streamlit as st
 from sklearn.metrics.pairwise import linear_kernel
+import pandas as pd
 
 
 def write_anime_details(row, name):
@@ -114,3 +115,17 @@ def get_anime_name_based_on_story(user_input, tfidf=None, tfidf_matrix=None, mod
     related_anime_indices = cosine_similarities.argsort()[:-11:-1]
     related_anime = model_df['Name'].iloc[related_anime_indices]
     return related_anime.values
+
+
+def get_ratings_score(temp_df):
+    median_score = temp_df.groupby('Rating')['Score'].median()
+    ratings_score = temp_df['Rating'].value_counts()
+    ratings_score_df = pd.DataFrame(
+        {'Rating': ratings_score.index, 'Count': ratings_score.values})
+    ratings_score_df.set_index('Rating', inplace=True)
+    ratings_score_df['Average_score'] = median_score
+    ratings_score_df.reset_index(inplace=True)
+    ratings_score_df = ratings_score_df[ratings_score_df['Rating'] != 'Unknown']
+    ratings_score_df.sort_values(by="Count", ascending=False, inplace=True)
+    ratings_score_df.reset_index(drop=True, inplace=True)
+    return ratings_score_df
