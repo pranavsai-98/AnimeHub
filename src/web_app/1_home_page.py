@@ -1,4 +1,6 @@
 import base64
+import pandas as pd
+import numpy as np
 import streamlit as st
 import streamlit.components as stc
 import random
@@ -6,11 +8,11 @@ import os
 from streamlit_option_menu import option_menu
 from PIL import Image
 import pickle
-import pandas as pd
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from utils import *
+
+# testing git
 
 
 st.set_page_config(page_title="Home", page_icon=":house:", layout="wide")
@@ -27,6 +29,7 @@ selected = option_menu(
 )
 
 if selected == 'Home':
+
     current_path = os.path.dirname(__file__)
     Thumbnail_folder = os.path.join(current_path, "../anime_images/")
     front_end_data = pd.read_csv(os.path.join(
