@@ -156,7 +156,8 @@ if selected == 'Home':
 
     else:
 
-        st.subheader("Here are your personalized recommendations!!")
+        st.subheader(
+            "Based on your Ratings :star:, Here are your personalized recommendations!!")
 
         st.write("#")
 
