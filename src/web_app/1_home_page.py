@@ -18,15 +18,16 @@ st.set_page_config(page_title="Home", page_icon=":rocket:", layout="wide")
 st.title("AnimeHub :clapper:")
 
 selected = option_menu(
-    menu_title=None,
-    options=['Home', 'Dashboard'],
-    icons=["house", 'rocket-takeoff'],
+    menu_title="Portal",
+    options=['Top Genres', "Personalized Picks",
+             "Anime Whisperer", 'Otaku Insights'],
+    icons=["fire", 'bullseye', "chat-heart", "clipboard-data-fill "],
     menu_icon="cast",
     default_index=0,
     orientation='horizontal',
 )
 
-if selected == 'Home':
+if selected == 'Top Genres':
 
     current_path = os.path.dirname(__file__)
     Thumbnail_folder = os.path.join(current_path, "../anime_images/")
@@ -64,13 +65,14 @@ if selected == 'Home':
                     except IndexError:
                         break
 
-    st.write("#")
+if selected == 'Personalized Picks':
 
-    st.divider()
+    current_path = os.path.dirname(__file__)
+    Thumbnail_folder = os.path.join(current_path, "../anime_images/")
+    front_end_data = pd.read_csv(os.path.join(
+        current_path, "../web_app/front_end_data.csv"))
 
-    st.header("Get Personalized Anime Recommendations:gift:")
-
-    st.write("#")
+    st.subheader("Get Personalized Anime Recommendations:gift:")
 
     model_df = front_end_data.copy(deep=True)
     model_df = model_df[model_df['total_ratings'] > 30000]
@@ -156,7 +158,7 @@ if selected == 'Home':
 
     else:
 
-        st.subheader(
+        st.write(
             "Based on your Ratings :star:, Here are your personalized recommendations!!")
 
         st.write("#")
@@ -182,10 +184,27 @@ if selected == 'Home':
 
                 st.image(image, use_column_width=True)
 
-    st.write("#")
-    st.divider()
+if selected == 'Anime Whisperer':
 
-    st.header("🕵️‍♂️Anime Whisperer🗣️: Speak the Plot📖, Discover the Title🔍!")
+    current_path = os.path.dirname(__file__)
+    Thumbnail_folder = os.path.join(current_path, "../anime_images/")
+    front_end_data = pd.read_csv(os.path.join(
+        current_path, "../web_app/front_end_data.csv"))
+
+    model_df = front_end_data.copy(deep=True)
+    model_df = model_df[model_df['total_ratings'] > 30000]
+    model_df.reset_index(inplace=True, drop=True)
+
+    tfidf = TfidfVectorizer(stop_words='english')
+
+    model_df['synopsis'] = model_df['synopsis'].fillna('')
+    tfidf_matrix = tfidf.fit_transform(model_df['synopsis'])
+    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+
+    st.write("#")
+
+    st.subheader(
+        "   🗣️: Speak the Plot📖, Discover the Title🔍!")
 
     st.write("#")
 
@@ -199,19 +218,66 @@ if selected == 'Home':
     if 'anime_index' not in st.session_state:
         st.session_state.anime_index = 0
 
-    if 'start_over_clicked' not in st.session_state:
-        st.session_state.start_over_clicked = False
+    # Initialize additional session state for the button events
+    if 'submit_clicked' not in st.session_state:
+        st.session_state.submit_clicked = False
 
-    if st.session_state.closest_anime.empty or st.session_state.start_over_clicked:
-        st.session_state.user_input = st.text_area(
-            "Enter the Anime story")
-        if st.button('Submit'):
-            st.session_state.closest_anime = pd.Series(
-                get_anime_name_based_on_story(st.session_state.user_input, tfidf=tfidf, tfidf_matrix=tfidf_matrix, model_df=model_df))
-            st.session_state.start_over_clicked = False
+    if 'next_clicked' not in st.session_state:
+        st.session_state.next_clicked = False
 
-    else:
+    if 'prev_clicked' not in st.session_state:
+        st.session_state.prev_clicked = False
+
+    # Process the text input and button events
+    st.session_state.user_input = st.text_area("Enter the Anime story")
+    if st.button('Submit'):
+        st.session_state.submit_clicked = True
+
+    col1, col2, col3 = st.columns([3, 3, 1])
+    with col2:
+        st.write("Want to share a new story?")
+
+    col1, col2, col3 = st.columns([3.35, 3, 1])
+    with col1:
+        if st.button('Previous Anime'):
+            st.session_state.prev_clicked = True
+
+    with col2:
+        if st.button('Start Over'):
+            st.session_state.clear()
+            st.session_state.user_input = ''
+            st.session_state.closest_anime = pd.Series()
+            st.session_state.anime_index = 0
+            st.session_state.submit_clicked = False
+            st.session_state.next_clicked = False
+            st.session_state.prev_clicked = False
+
+    with col3:
+        if st.button('Next Anime'):
+            st.session_state.next_clicked = True
+
+    # Handle the 'Submit' event
+    if st.session_state.submit_clicked:
+        st.session_state.closest_anime = pd.Series(
+            get_anime_name_based_on_story(st.session_state.user_input, tfidf=tfidf, tfidf_matrix=tfidf_matrix, model_df=model_df))
+        st.session_state.submit_clicked = False  # Reset the event
+
+    # Handle the 'Next Anime' event
+    if st.session_state.next_clicked and st.session_state.anime_index < len(st.session_state.closest_anime) - 1:
+        st.session_state.anime_index += 1
+        st.session_state.next_clicked = False  # Reset the event
+
+    # Handle the 'Previous Anime' event
+    if st.session_state.prev_clicked and st.session_state.anime_index > 0:
+        st.session_state.anime_index -= 1
+        st.session_state.prev_clicked = False  # Reset the event
+
+    if not st.session_state.closest_anime.empty:
         anime_name = st.session_state.closest_anime[st.session_state.anime_index]
+
+        st.markdown(f"The Anime you're talking about is: **{anime_name}**")
+        st.write(
+            "Is this not the Anime you're Searching for?, Click Next to catch the Anime you're looking for.")
 
         col1, col2 = st.columns([1, 3])
         with col1:
@@ -227,28 +293,8 @@ if selected == 'Home':
             row = model_df[model_df["Name"] == anime_name]
             write_anime_details_wide(row, image_name)
 
-        st.markdown(f"The Anime you're talking about is: **{anime_name}**")
-        st.write(
-            "Is this not the Anime you're Searching for?, Click Next to catch the Anime you're looking for.")
 
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            if st.button('Previous Anime'):
-                if st.session_state.anime_index > 0:
-                    st.session_state.anime_index -= 1
-
-        with col2:
-            if st.button('Start Over'):
-                st.session_state.start_over_clicked = True
-            st.write("Want to share a different story?")
-
-        with col3:
-            if st.button('Next Anime'):
-                if st.session_state.anime_index < len(st.session_state.closest_anime) - 1:
-                    st.session_state.anime_index += 1
-
-if selected == "Dashboard":
+if selected == "Otaku Insights":
 
     import plotly.io as pio
     import plotly.express as px
