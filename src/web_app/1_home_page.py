@@ -74,6 +74,8 @@ if selected == 'Personalized Picks':
 
     st.subheader("Get Personalized Anime Recommendations:gift:")
 
+    st.write("Rate 5 Animes and get your personalized recommendations!!")
+
     model_df = front_end_data.copy(deep=True)
     model_df = model_df[model_df['total_ratings'] > 30000]
     model_df.reset_index(inplace=True, drop=True)
@@ -121,6 +123,9 @@ if selected == 'Personalized Picks':
             write_anime_details_wide(row, image_name)
 
         st.subheader("Rate {}:".format(anime_name))
+
+        st.write("Your Recommendations are {} ratings away".format(
+            5 - len(st.session_state.rating)))
 
         col1, col2 = st.columns([2, 1])
 
@@ -204,7 +209,7 @@ if selected == 'Anime Whisperer':
     st.write("#")
 
     st.subheader(
-        "   🗣️: Speak the Plot📖, Discover the Title🔍!")
+        "🗣️: Speak the Plot📖, Discover the Title🔍!")
 
     st.write("#")
 
