@@ -23,6 +23,4 @@ The primary motivation behind this project was to assist anime enthusiasts, espe
 
 The application is built entirely on Python and Streamlit.
 
-## Author 👨‍💻
 
-Pranav Sai
