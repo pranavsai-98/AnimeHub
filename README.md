@@ -2,7 +2,7 @@
 
 Visit the live application here: [AnimeHub](https://anime-hu6.streamlit.app/)
 
-![Alt Text](https://github.com/pranavsai-98/AnimeHub/issues/1#issue-1899501816)
+https://github.com/pranavsai-98/AnimeHub/assets/68989942/5ffe6de2-665a-403d-b14a-2022839612ba
 
 
 Welcome to AnimeHub, a handy tool for all anime fans. Made with advanced machine learning, AnimeHub serves all anime lovers across the world by suggesting the right anime just for you. Browse top anime from different genres, get personalized recommendations, or find the name of an anime from a story you remember. With AnimeHub, exploring the world of anime is easy and fun.
